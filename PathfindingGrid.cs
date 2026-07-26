@@ -9,6 +9,14 @@ public class PathfindingGrid : MonoBehaviour
 
     private readonly Dictionary<Vector3Int, PathNode> gridNodes = new Dictionary<Vector3Int, PathNode>();
 
+    private static readonly Vector3Int[] NeighbourDirections =
+    {
+        Vector3Int.up,
+        Vector3Int.down,
+        Vector3Int.left,
+        Vector3Int.right
+    };
+
     void Awake()
     {
         GenerateGrid();
@@ -46,15 +54,131 @@ public class PathfindingGrid : MonoBehaviour
     {
         return GetNode(gridPosition)?.IsWalkable == true;
     }
+
+    public List<Vector3Int> FindPath(Vector3Int startPosition, Vector3Int targetPosition)
+    {
+        PathNode startNode = GetNode(startPosition);
+        PathNode targetNode = GetNode(targetPosition);
+
+        if (startNode == null || targetNode == null)
+            return null;
+
+        if (!startNode.IsWalkable || !targetNode.IsWalkable)
+            return null;
+
+        ResetNodes();
+
+        List<PathNode> openNodes = new() { startNode };
+        HashSet<PathNode> closedNodes = new();
+
+        startNode.GCost = 0;
+        startNode.HCost = CalculateDistance(startNode, targetNode);
+
+        while (openNodes.Count > 0)
+        {
+            PathNode currentNode = GetLowestCostNode(openNodes);
+
+            if (currentNode == targetNode)
+                return BuildPath(targetNode);
+
+            openNodes.Remove(currentNode);
+            closedNodes.Add(currentNode);
+
+            foreach (PathNode neighbour in GetNeighbours(currentNode))
+            {
+                if (!neighbour.IsWalkable || closedNodes.Contains(neighbour))
+                    continue;
+
+                int tentativeGCost = currentNode.GCost + CalculateDistance(currentNode, neighbour);
+
+                if (tentativeGCost < neighbour.GCost)
+                {
+                    neighbour.ParentNode = currentNode;
+                    neighbour.GCost = tentativeGCost;
+                    neighbour.HCost = CalculateDistance(neighbour, targetNode);
+
+                    if (!openNodes.Contains(neighbour))
+                        openNodes.Add(neighbour);
+                }    
+            }
+        }
+
+        // No valid route found
+        return null;
+    }
+
+    private void ResetNodes()
+    {
+        foreach (PathNode node in gridNodes.Values)
+        {
+            node.GCost = int.MaxValue;
+            node.HCost = 0;
+            node.ParentNode = null;
+        }
+    }
+
+    private int CalculateDistance(PathNode first, PathNode second)
+    {
+        int xDistance = Mathf.Abs(first.GridPosition.x - second.GridPosition.x);
+        int yDistance = Mathf.Abs(first.GridPosition.y - second.GridPosition.y);
+
+        return xDistance + yDistance;
+    }
+
+    private PathNode GetLowestCostNode(List<PathNode> nodes)
+    {
+        PathNode lowestCostNode = nodes[0];
+
+        for (int i = 1; i < nodes.Count; i++)
+        {
+            PathNode candidate = nodes[i];
+
+            if (candidate.FCost < lowestCostNode.FCost ||
+                candidate.FCost == lowestCostNode.FCost && candidate.HCost < lowestCostNode.HCost)
+            {
+                lowestCostNode = candidate;
+            }
+        }
+
+        return lowestCostNode;
+    }
+
+    private List<Vector3Int> BuildPath(PathNode targetNode)
+    {
+        List<Vector3Int> path = new();
+
+        PathNode currentNode = targetNode;
+
+        while (currentNode != null)
+        {
+            path.Add(currentNode.GridPosition);
+            currentNode = currentNode.ParentNode;
+        }
+
+        path.Reverse();
+        return path;
+    }
+
+    private IEnumerable<PathNode> GetNeighbours(PathNode node)
+    {
+        foreach (Vector3Int direction in NeighbourDirections)
+        {
+            Vector3Int neighbourPosition = node.GridPosition + direction;
+            PathNode neighbour = GetNode(neighbourPosition);
+
+            if (neighbour != null)
+                yield return neighbour;
+        }
+    }
 }
 
 public class PathNode
 {
     public Vector3Int GridPosition;
     public bool IsWalkable;
-    public int gCost; // Distance from start node
-    public int hCost; // Distance to end node
-    public int fCost => gCost + hCost; // Total cost
+    public int GCost; // Distance from start node
+    public int HCost; // Distance to end node
+    public int FCost => GCost + HCost; // Total cost
 
-    public PathNode parentNode; // For backtracking the final path
+    public PathNode ParentNode; // For backtracking the final path
 }
