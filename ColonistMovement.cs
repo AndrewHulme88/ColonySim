@@ -15,8 +15,20 @@ public class ColonistMovement : MonoBehaviour
     [SerializeField] private PathfindingGrid pathfindingGrid;
     [SerializeField] private Tilemap groundTilemap;
     [SerializeField] private float moveSpeed = 3f;
+    [SerializeField] private JobManager jobManager;
 
     private Coroutine movementCoroutine;
+    private Job currentJob;
+
+    private void Start()
+    {
+        currentJob = jobManager.GetAvailableJob();
+
+        if (currentJob == null)
+            return;
+
+        MoveTo(currentJob.TargetPosition);
+    }
 
     public void MoveTo(Vector3Int targetGridPosition)
     {
@@ -58,5 +70,8 @@ public class ColonistMovement : MonoBehaviour
         }
 
         movementCoroutine = null;
+
+        jobManager.CompleteJob(currentJob);
+        currentJob = null;
     }
 }
