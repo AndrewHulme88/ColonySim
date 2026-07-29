@@ -7,9 +7,25 @@ public class ColonistAi : MonoBehaviour
 
     private Job currentJob;
 
+    private void OnEnable()
+    {
+        jobManager.JobsAvailable += HandleJobsAvailable;
+    }
+
+    private void OnDisable()
+    {
+        jobManager.JobsAvailable -= HandleJobsAvailable;
+    }
+
     private void Start()
     {
-        SeekJob();
+        SeekJob();  
+    }
+
+    private void HandleJobsAvailable()
+    {
+        if (currentJob == null && !movement.isMoving)
+            SeekJob();
     }
 
     private void SeekJob()

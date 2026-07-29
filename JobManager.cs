@@ -1,26 +1,58 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class JobManager : MonoBehaviour
 {
-    [SerializeField] private Vector3Int jobDestination;
+    [SerializeField] private float timer = 5f;
 
-    private Job availableJob;
+    public event Action JobsAvailable;
+
+    private readonly List<Job> jobs = new();
 
     private void Awake()
     {
         // Temporary test job until world objects create real jobs
-        availableJob = new Job(jobDestination);
+        //jobs.Add(new Job(jobDestination));
+    }
+
+    private void Start()
+    {
+        StartCoroutine(CreateDelayedTestJob());
+    }
+
+    private IEnumerator CreateDelayedTestJob()
+    {
+        CreateJob(new Vector3Int(2, 3, 0));
+
+        yield return new WaitForSeconds(5);
+
+        CreateJob(new Vector3Int(-3, 4, 0));
+
+        yield return new WaitForSeconds(5);
+
+        CreateJob(new Vector3Int(6, -5, 0));
+    }
+
+    public void CreateJob(Vector3Int targetPosition)
+    {
+        jobs.Add(new Job(targetPosition));
+        JobsAvailable?.Invoke();
     }
 
     public Job GetAvailableJob()
     {
-        if (availableJob == null || availableJob.IsReserved || availableJob.IsComplete)
+        foreach (Job job in jobs)
         {
-            return null;
+            if (job.IsReserved || job.IsComplete)
+                return null;
+
+            job.IsReserved = true;
+            return job;
         }
 
-        availableJob.IsReserved = true;
-        return availableJob;
+        return null;
     }
 
     public void CompleteJob(Job job)
@@ -29,7 +61,7 @@ public class JobManager : MonoBehaviour
             return;
 
         job.IsComplete = true;
-        job.IsReserved = false;
+        jobs.Remove(job);
     }
 }
 

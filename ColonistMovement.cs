@@ -17,6 +17,8 @@ public class ColonistMovement : MonoBehaviour
     [SerializeField] private Tilemap groundTilemap;
     [SerializeField] private float moveSpeed = 3f;
 
+    public bool isMoving = false;
+
     private Coroutine movementCoroutine;
 
     public void MoveTo(Vector3Int targetGridPosition, Action onDestinationReached = null)
@@ -42,6 +44,8 @@ public class ColonistMovement : MonoBehaviour
 
     private IEnumerator FollowPath(List<Vector3Int> path, Action onDestinationReached)
     {
+        isMoving = true;
+
         // Skip the first node since it represents the colonist's current position.
         for (int i = 1; i < path.Count; i++)
         {
@@ -60,6 +64,7 @@ public class ColonistMovement : MonoBehaviour
 
         movementCoroutine = null;
 
+        isMoving = false;
         onDestinationReached?.Invoke();
     }
 }
