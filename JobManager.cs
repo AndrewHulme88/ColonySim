@@ -6,7 +6,7 @@ public class JobManager : MonoBehaviour
 
     private Job availableJob;
 
-    private void Start()
+    private void Awake()
     {
         // Temporary test job until world objects create real jobs
         availableJob = new Job(jobDestination);
