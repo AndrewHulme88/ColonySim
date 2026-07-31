@@ -25,9 +25,62 @@ public class PathfindingGrid : MonoBehaviour
         Vector3Int.right
     };
 
+    private void OnEnable()
+    {
+        Tilemap.tilemapTileChanged += OnTilemapTileChanged;
+    }
+
+    private void OnDisable()
+    {
+        Tilemap.tilemapTileChanged -= OnTilemapTileChanged;
+    }
+
     void Awake()
     {
         GenerateGrid();
+    }
+
+    public void RebuildGrid()
+    {
+        GenerateGrid();
+    }
+
+    private void OnTilemapTileChanged(Tilemap tilemap, Tilemap.SyncTile[] syncTiles)
+    {
+        if (tilemap == obstacleTilemap || tilemap == groundTilemap)
+        {
+            foreach (var syncTile in syncTiles)
+            {
+                UpdateNodeAtPosition(syncTile.position);
+            }
+        }
+    }
+
+    public void UpdateNodeAtPosition(Vector3Int position)
+    {
+        if (!groundTilemap.HasTile(position))
+        {
+            if (gridNodes.ContainsKey(position))
+            {
+                gridNodes.Remove(position);
+            }
+            return;
+        }
+
+        bool isWalkable = !obstacleTilemap.HasTile(position);
+
+        if (gridNodes.TryGetValue(position, out PathNode node))
+        {
+            node.IsWalkable = isWalkable;
+        }
+        else
+        {
+            gridNodes[position] = new PathNode
+            {
+                GridPosition = position,
+                IsWalkable = isWalkable
+            };
+        }
     }
 
     private void GenerateGrid()

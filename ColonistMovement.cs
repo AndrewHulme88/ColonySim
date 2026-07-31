@@ -21,7 +21,7 @@ public class ColonistMovement : MonoBehaviour
 
     private Coroutine movementCoroutine;
 
-    public void MoveTo(Vector3Int targetGridPosition, Action onDestinationReached = null)
+    public void MoveTo(Vector3Int targetGridPosition, Action<bool> onDestinationReached = null)
     {
         // Convert colonist's position into a grid position before requesting a path.
         Vector3Int startGridPosition = groundTilemap.WorldToCell(transform.position);
@@ -31,7 +31,7 @@ public class ColonistMovement : MonoBehaviour
         if (path == null || path.Count == 0)
         {
             Debug.LogWarning($"No path found to {targetGridPosition}.");
-
+            onDestinationReached?.Invoke(false);
             return;
         }
 
@@ -42,13 +42,19 @@ public class ColonistMovement : MonoBehaviour
         movementCoroutine = StartCoroutine(FollowPath(path, onDestinationReached));
     }
 
-    private IEnumerator FollowPath(List<Vector3Int> path, Action onDestinationReached)
+    private IEnumerator FollowPath(List<Vector3Int> path, Action<bool> onDestinationReached)
     {
         isMoving = true;
 
         // Skip the first node since it represents the colonist's current position.
         for (int i = 1; i < path.Count; i++)
         {
+            if (!pathfindingGrid.IsWalkable(path[i]))
+            {
+                onDestinationReached?.Invoke(false);
+                yield break;
+            }
+
             Vector3 targetWorldPosition = groundTilemap.GetCellCenterWorld(path[i]);
 
             while (Vector3.Distance(transform.position, targetWorldPosition) > 0.01f)
@@ -65,6 +71,6 @@ public class ColonistMovement : MonoBehaviour
         movementCoroutine = null;
 
         isMoving = false;
-        onDestinationReached?.Invoke();
+        onDestinationReached?.Invoke(true);
     }
 }

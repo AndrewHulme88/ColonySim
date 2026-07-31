@@ -39,8 +39,15 @@ public class ColonistAi : MonoBehaviour
         movement.MoveTo(currentJob.TargetPosition, StartWorking);
     }
 
-    private void StartWorking()
+    private void StartWorking(bool startWorking)
     {
+        if (!startWorking)
+        {
+            currentJob = null;
+            SeekJob();
+            return;
+        }
+
         StartCoroutine(PerformWork());
     }
 
