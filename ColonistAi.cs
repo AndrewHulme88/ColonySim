@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class ColonistAi : MonoBehaviour
@@ -35,7 +36,19 @@ public class ColonistAi : MonoBehaviour
         if (currentJob == null)
             return;
 
-        movement.MoveTo(currentJob.TargetPosition, CompleteCurrentJob);
+        movement.MoveTo(currentJob.TargetPosition, StartWorking);
+    }
+
+    private void StartWorking()
+    {
+        StartCoroutine(PerformWork());
+    }
+
+    private IEnumerator PerformWork()
+    {
+        yield return new WaitForSeconds(3f);
+
+        CompleteCurrentJob();
     }
 
     private void CompleteCurrentJob()

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,35 +9,9 @@ public enum TypeOfJob
 
 public class JobManager : MonoBehaviour
 {
-    [SerializeField] private float timer = 5f;
-
     public event Action JobsAvailable;
 
     private readonly List<Job> jobs = new();
-
-    private void Awake()
-    {
-        // Temporary test job until world objects create real jobs
-        //jobs.Add(new Job(jobDestination));
-    }
-
-    private void Start()
-    {
-        //StartCoroutine(CreateDelayedTestJob());
-    }
-
-    //private IEnumerator CreateDelayedTestJob()
-    //{
-    //    CreateJob(new Vector3Int(2, 3, 0));
-
-    //    yield return new WaitForSeconds(2);
-
-    //    CreateJob(new Vector3Int(-3, 4, 0));
-
-    //    yield return new WaitForSeconds(2);
-
-    //    CreateJob(new Vector3Int(6, -5, 0));
-    //}
 
     public void CreateJob(Vector3Int targetPosition, GameObject targetObject, TypeOfJob jobType)
     {
