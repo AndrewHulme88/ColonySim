@@ -39,10 +39,10 @@ public class ColonistMovement : MonoBehaviour
         if (movementCoroutine != null)
             StopCoroutine(movementCoroutine);
 
-        movementCoroutine = StartCoroutine(FollowPath(path, onDestinationReached));
+        movementCoroutine = StartCoroutine(FollowPath(targetGridPosition, path, onDestinationReached));
     }
 
-    private IEnumerator FollowPath(List<Vector3Int> path, Action<bool> onDestinationReached)
+    private IEnumerator FollowPath(Vector3Int targetGridPosition, List<Vector3Int> path, Action<bool> onDestinationReached)
     {
         isMoving = true;
 
@@ -51,8 +51,21 @@ public class ColonistMovement : MonoBehaviour
         {
             if (!pathfindingGrid.IsWalkable(path[i]))
             {
-                onDestinationReached?.Invoke(false);
-                yield break;
+                // Attempt to recalculate the path from current position
+                Vector3Int currentGridPosition = groundTilemap.WorldToCell(transform.position);
+                List<Vector3Int> newPath = pathfindingGrid.FindPath(currentGridPosition, targetGridPosition);
+
+                if (newPath != null && newPath.Count > 1)
+                {
+                    path = newPath;
+                    i = 0; // Will be incremented to 1 by the loop update, so next iteration starts at index 1
+                    continue;
+                }
+                else
+                {
+                    onDestinationReached?.Invoke(false);
+                    yield break;
+                }
             }
 
             Vector3 targetWorldPosition = groundTilemap.GetCellCenterWorld(path[i]);
